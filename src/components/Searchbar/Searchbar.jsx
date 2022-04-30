@@ -10,8 +10,12 @@ import {
 const Searchbar = ({ onSearch }) => {
   const searchImages = e => {
     const input = e.target.elements.input;
-
     e.preventDefault();
+
+    if (input.value === '') {
+      return;
+    }
+
     onSearch(input.value);
 
     input.value = '';

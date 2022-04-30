@@ -8,8 +8,6 @@ class Modal extends Component {
     largeImage: propTypes.string.isRequired,
   };
 
-  state = {};
-
   componentDidMount() {
     window.addEventListener('keydown', this.handleKeyDown);
   }
