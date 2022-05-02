@@ -17,8 +17,6 @@ const Searchbar = ({ onSearch }) => {
     }
 
     onSearch(input.value);
-
-    input.value = '';
   };
 
   return (

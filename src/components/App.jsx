@@ -3,7 +3,7 @@ import Searchbar from 'components/Searchbar/Searchbar';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
 import Modal from 'components/Modal/Modal';
 import Loader from 'components/Loader/Loader';
-import fetchAPI from 'services/images-api';
+import { fetchAPI, fetchTotalHits } from 'services/images-api';
 import ErrorMessage from 'components/ErrorMessage/ErrorMessage';
 import Button from 'components/Button/Button';
 import { animateScroll as scroll } from 'react-scroll';
@@ -23,7 +23,7 @@ class App extends Component {
     modalImg: '',
     showModal: false,
     status: Status.IDLE,
-    isFetchEmpty: true,
+    totalHits: '',
   };
 
   getInputValue = inputValue => {
@@ -45,11 +45,15 @@ class App extends Component {
       prevState.currentPage !== currentPage
     ) {
       if (currentPage === 1) {
+        fetchTotalHits(inputValue, currentPage).then(r => {
+          this.setState({ totalHits: r });
+        });
         this.setState({
           status: Status.PENDING,
         });
       }
       this.fetchImages();
+
       if (currentPage > 1) {
         scroll.scrollToBottom();
       }
@@ -63,13 +67,7 @@ class App extends Component {
       this.setState(prevState => ({
         images: [...prevState.images, ...dataImages],
         status: Status.RESOLVE,
-        isFetchEmpty: false,
       }));
-      if (dataImages.length === 0) {
-        this.setState({
-          isFetchEmpty: true,
-        });
-      }
     } catch (error) {
       alert();
     }
@@ -93,9 +91,9 @@ class App extends Component {
   };
 
   render() {
-    const { showModal, modalImg, status, images, isFetchEmpty, currentPage } =
+    const { showModal, modalImg, status, images, currentPage, totalHits } =
       this.state;
-
+    const isHitsEnded = currentPage * 12 >= totalHits;
     return (
       <div>
         <Searchbar onSearch={this.getInputValue} />
@@ -103,14 +101,11 @@ class App extends Component {
         {status === 'resolve' && (
           <ImageGallery images={images} onClick={this.getLargeImgUrl} />
         )}
-        {status === 'resolve' && !isFetchEmpty && (
+        {status === 'resolve' && !isHitsEnded && (
           <Button
             text={'Load more'}
             onClick={this.handleIncrementCurrentPage}
           />
-        )}
-        {status === 'resolve' && isFetchEmpty && currentPage > 1 && (
-          <ErrorMessage text="Pictures are over" />
         )}
         {images.length === 0 && status === 'resolve' && (
           <ErrorMessage text="Nothing found" />
