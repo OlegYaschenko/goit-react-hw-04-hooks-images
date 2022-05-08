@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Searchbar from 'components/Searchbar/Searchbar';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
 import Modal from 'components/Modal/Modal';
@@ -15,106 +15,70 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-class App extends Component {
-  state = {
-    images: [],
-    inputValue: '',
-    currentPage: 1,
-    modalImg: '',
-    showModal: false,
-    status: Status.IDLE,
-    totalHits: '',
+function App() {
+  const [images, setImages] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [modalImg, setModalImg] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [status, setStatus] = useState(Status.IDLE);
+  const [totalHits, setTotalHits] = useState('');
+
+  const getInputValue = inputValue => {
+    setInputValue(inputValue);
+    setImages([]);
+    setCurrentPage(1);
   };
 
-  getInputValue = inputValue => {
-    this.setState({
-      inputValue: inputValue,
-      images: [],
-      currentPage: 1,
-    });
-  };
-
-  componentDidUpdate(prevProps, prevState) {
-    const { inputValue, currentPage } = this.state;
-
-    if (this.props.inputValue === '') {
+  useEffect(() => {
+    if (inputValue === '') {
       return;
     }
-    if (
-      prevState.inputValue !== inputValue ||
-      prevState.currentPage !== currentPage
-    ) {
-      if (currentPage === 1) {
-        this.setState({
-          status: Status.PENDING,
-        });
+    currentPage === 1 ? setStatus(Status.PENDING) : scroll.scrollToBottom();
+
+    (async function fetchImages() {
+      try {
+        let { hits, totalHits } = await fetchAPI(inputValue, currentPage);
+        setImages(image => [...image, ...hits]);
+        setTotalHits(totalHits);
+        setStatus(Status.RESOLVE);
+      } catch (error) {
+        alert();
       }
-      this.fetchImages();
+    })();
+  }, [inputValue, currentPage]);
 
-      if (currentPage > 1) {
-        scroll.scrollToBottom();
-      }
-    }
-  }
-
-  async fetchImages() {
-    const { inputValue, currentPage } = this.state;
-    try {
-      let { hits, totalHits } = await fetchAPI(inputValue, currentPage);
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        totalHits: totalHits,
-        status: Status.RESOLVE,
-      }));
-    } catch (error) {
-      alert();
-    }
-  }
-
-  handleIncrementCurrentPage = () => {
-    this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
-    }));
+  const handleIncrementCurrentPage = () => {
+    setCurrentPage(page => page + 1);
   };
 
-  getLargeImgUrl = url => {
-    this.toggleModal();
-    this.setState({ modalImg: url });
+  const getLargeImgUrl = url => {
+    toggleModal();
+    setModalImg(url);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleModal = () => {
+    setShowModal(prevState => !prevState);
   };
 
-  render() {
-    const { showModal, modalImg, status, images, currentPage, totalHits } =
-      this.state;
-    const isHitsEnded = currentPage * 12 >= totalHits;
-    return (
-      <div>
-        <Searchbar onSearch={this.getInputValue} />
-        {status === 'pending' && <Loader />}
-        {status === 'resolve' && (
-          <ImageGallery images={images} onClick={this.getLargeImgUrl} />
-        )}
-        {status === 'resolve' && !isHitsEnded && (
-          <Button
-            text={'Load more'}
-            onClick={this.handleIncrementCurrentPage}
-          />
-        )}
-        {images.length === 0 && status === 'resolve' && (
-          <ErrorMessage text="Nothing found" />
-        )}
-        {status === 'rejected' && <ErrorMessage text="Something went wrong!" />}
-        {showModal && (
-          <Modal onClose={this.toggleModal} largeImage={modalImg} />
-        )}
-      </div>
-    );
-  }
+  const isHitsEnded = currentPage * 12 >= totalHits;
+  return (
+    <div>
+      <Searchbar onSearch={getInputValue} />
+      {status === 'pending' && <Loader />}
+      {status === 'resolve' && (
+        <ImageGallery images={images} onClick={getLargeImgUrl} />
+      )}
+      {status === 'resolve' && !isHitsEnded && (
+        <Button text={'Load more'} onClick={handleIncrementCurrentPage} />
+      )}
+      {images.length === 0 && status === 'resolve' && (
+        <ErrorMessage text="Nothing found" />
+      )}
+      {status === 'rejected' && <ErrorMessage text="Something went wrong!" />}
+      {showModal && <Modal onClose={toggleModal} largeImage={modalImg} />}
+    </div>
+  );
 }
 
 export default App;
