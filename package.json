@@ -1,8 +1,8 @@
 {
-  "name": "goit-react-hw-03-image-finder",
+  "name": "goit-react-hw-04-hooks-images",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://OlegYaschenko.github.io/goit-react-hw-03-image-finder/",
+  "homepage": "https://OlegYaschenko.github.io/goit-react-hw-04-hooks-images/",
   "dependencies": {
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
